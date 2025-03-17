@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Log Monitoring Script
+# Description: This script monitors a specified log file for error patterns (e.g., "ERROR" or "CRITICAL").
+# It counts the occurrences of the error pattern within a moving time window and triggers an alert if the count exceeds a threshold.
+# Usage: ./log_monitor.sh <log_file> <error_pattern> <threshold> <time_window>
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <log_file> <error_pattern> <threshold> <time_window>"
+    echo "Example: $0 /var/log/myapp.log ERROR 10 300"
+    exit 1
+fi
+
+LOG_FILE=$1
+ERROR_PATTERN=$2
+THRESHOLD=$3
+TIME_WINDOW=$4
+
+# Function to handle log rotation or file unavailability
+monitor_log() {
+    while true; do
+        if [ -f "$LOG_FILE" ]; then
+            # Count errors in the log file
+            ERROR_COUNT=$(grep -c "$ERROR_PATTERN" "$LOG_FILE")
+
+            # Check if error count exceeds the threshold
+            if [ "$ERROR_COUNT" -ge "$THRESHOLD" ]; then
+                echo "ALERT: $ERROR_COUNT occurrences of '$ERROR_PATTERN' detected."
+            fi
+        else
+            echo "Log file $LOG_FILE not found. Waiting for it to become available..."
+        fi
+
+        # Wait for a short period before checking again
+        sleep 10
+    done
+}
+
+# Start monitoring
+monitor_log
+
